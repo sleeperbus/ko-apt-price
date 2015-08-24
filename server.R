@@ -177,12 +177,14 @@ shinyServer(function(input, output, clientData, session){
     dongName = dong[which(dong$dongCode == apts$DONG_CODE[1]), c("dongName")]
 		aptCodes = input$aptCodes
 		realArea = input$realArea
-		
+			
 		result = subset(apts, APT_CODE %in% aptCodes)
 		result = subset(result, REAL_AREA%in% realArea)
 		result$APT_NAME = factor(result$APT_NAME, ordered=F)
 		result$GROUP = factor(result$GROUP)
-		
+
+		# 최종 result 에서 APT_CODE 별로 데이터가 2개 이하이면 layer_smooths 를 
+		# 그리는데 에러가 발생한다. APT_CODE 별로 데이터 개수를 확인해봐야 한다.
 		ggvis(result, x=~SALE_DATE, y=~TRADE_AMT, fill=~GROUP, stroke=~GROUP) %>%
 		layer_points(opacity:=0.4, key :=~ID) %>%
 		add_tooltip(tooltip, "hover") %>%
