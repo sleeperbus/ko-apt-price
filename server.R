@@ -173,6 +173,7 @@ shinyServer(function(input, output, clientData, session){
 		message("graph dong points in")
     
 		apts = dongData() 
+    apts$FREQ = 0
     if (is.null(apts)) return(NULL)
     
     dongName = dong[which(dong$dongCode == apts$DONG_CODE[1]), c("dongName")]
@@ -181,22 +182,23 @@ shinyServer(function(input, output, clientData, session){
 			
 		result = subset(apts, APT_CODE %in% aptCodes)
 		result = subset(result, REAL_AREA%in% realArea) 
-		if (nrow(result) == 0) return(NULL)
 		result$APT_NAME = factor(result$APT_NAME, ordered=F)
 		result$GROUP = factor(result$GROUP)
 
-		# 최종 result 에서 APT_CODE 별로 데이터가 2개 이하이면 layer_smooths 를 
-		# 그리는데 에러가 발생한다. GROUP 별로 데이터 개수를 확인해봐야 한다.
-		result = ddply(result, .(GROUP), transform, FREQ = length(GROUP))
-		str(result)
-		lineDF = subset(result, FREQ > 3)
-		str(lineDF)
+		# 최종 result 에서 GROUP 별로 데이터가 2개 이하이면 layer_smooths 를 
+		# 그리는데 에러가 발생한다. 
+    # 추세선을 그리는 df 와 point 를 찍을 df 를 분리한다.
+		pointDF = ddply(result, .(GROUP), transform, FREQ = length(GROUP))
+		lineDF = subset(pointDF, FREQ > 3)
+    if (nrow(lineDF) == 0) defaultDF = pointDF
+    else defaultDF = lineDF
 		
-		ggvis(lineDF, x=~SALE_DATE, y=~TRADE_AMT, fill=~GROUP, stroke=~GROUP) %>%
-		group_by(GROUP) %>%
-		layer_smooths(span=1) %>%
-		layer_points(opacity:=0.4, key :=~ID) %>%
-		# layer_points(data = result, opacity:=0.4, key :=~ID) %>%
+		graph = ggvis(defaultDF, x=~SALE_DATE, y=~TRADE_AMT, fill=~GROUP, stroke=~GROUP) %>%
+		group_by(GROUP)
+  
+    if (nrow(lineDF) > 0) graph = graph %>% layer_smooths(span=1)
+    graph %>%        
+		layer_points(data = pointDF, opacity:=0.4, key :=~ID) %>%
 		add_tooltip(tooltip, "hover") %>%
 		add_axis("x", title="거래일") %>% 
 		add_axis("x", title=dongName, title_offset=20, orient="top", ticks=0, 
