@@ -5,10 +5,10 @@ gugun = readRDS("data/gugun.rds")
 dong = readRDS("data/dong.rds")
 
 # 인천 서구 거래동향
-sampleGugunCode = "28260"
+sampleGugunCode = "11680"
 sampleGugun = data.frame()
 for (year in 2006:2015) {
-  fileName = paste0("data/", sampleGugunCode, "_", year, ".rds")
+  fileName = paste0("data/t_", sampleGugunCode, "_", year, ".rds")
   tmpDf = data.frame()
   tmpDf = readRDS(fileName)
   sampleGugun = rbind(sampleGugun, tmpDf) 
@@ -62,4 +62,19 @@ fileNames = sapply(files, function(file) file.path("data", file))
 result = lapply(fileNames, function(file) readRDS(file))
 result = do.call("rbind", result)
 
+# layer_smooths 가 3개 미만이면 에러가 발생함
+df = data.frame(x = c(1, 2), y = c(4,5))
+ggvis(data = df, x = ~x, y = ~y) %>%
+  layer_points()  %>% 
+  layer_smooths()
+df = rbind(df, df)
+ggvis(data = df, x = ~x, y = ~y) %>%
+  layer_points()  %>% 
+  layer_smooths()
 
+df = data.frame(x = c(1, 1, 1), y = c(2, 2, 2))
+ggvis(data = df, x = ~x, y = ~y) %>%
+  layer_points() %>%
+  layer_smooths()
+
+# group 이 3개 미만이면 뻥튀기 시킴

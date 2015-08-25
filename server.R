@@ -1,4 +1,5 @@
 library(shiny)
+library(plyr)
 
 sido = readRDS("data/sido.rds")
 sido$sidoCode = as.character(sido$sidoCode)
@@ -179,17 +180,24 @@ shinyServer(function(input, output, clientData, session){
 		realArea = input$realArea
 			
 		result = subset(apts, APT_CODE %in% aptCodes)
-		result = subset(result, REAL_AREA%in% realArea)
+		result = subset(result, REAL_AREA%in% realArea) 
+		if (nrow(result) == 0) return(NULL)
 		result$APT_NAME = factor(result$APT_NAME, ordered=F)
 		result$GROUP = factor(result$GROUP)
 
 		# 최종 result 에서 APT_CODE 별로 데이터가 2개 이하이면 layer_smooths 를 
-		# 그리는데 에러가 발생한다. APT_CODE 별로 데이터 개수를 확인해봐야 한다.
-		ggvis(result, x=~SALE_DATE, y=~TRADE_AMT, fill=~GROUP, stroke=~GROUP) %>%
-		layer_points(opacity:=0.4, key :=~ID) %>%
-		add_tooltip(tooltip, "hover") %>%
+		# 그리는데 에러가 발생한다. GROUP 별로 데이터 개수를 확인해봐야 한다.
+		result = ddply(result, .(GROUP), transform, FREQ = length(GROUP))
+		str(result)
+		lineDF = subset(result, FREQ > 3)
+		str(lineDF)
+		
+		ggvis(lineDF, x=~SALE_DATE, y=~TRADE_AMT, fill=~GROUP, stroke=~GROUP) %>%
 		group_by(GROUP) %>%
 		layer_smooths(span=1) %>%
+		layer_points(opacity:=0.4, key :=~ID) %>%
+		# layer_points(data = result, opacity:=0.4, key :=~ID) %>%
+		add_tooltip(tooltip, "hover") %>%
 		add_axis("x", title="거래일") %>% 
 		add_axis("x", title=dongName, title_offset=20, orient="top", ticks=0, 
              properties=axis_props(
