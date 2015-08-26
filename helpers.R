@@ -165,6 +165,31 @@ f_dongYearData = function(dongCode, from, to, f_name) {
   return(apts) 
 }
 
+f_periods = function(startYear, startPeriod, endYear, endPeriod) {
+	if ((startYear * 100 + startPeriod) > (endYear * 100 + endPeriod))
+		return(NULL)
+
+	start.period = seq(startPeriod, 4, by = 1)
+	start.year = rep(startYear, length(start.period))
+	start.DF = data.frame(year = start.year, period = start.period) 
+
+	end.period = seq(1, endPeriod, by = 1)
+	end.year = rep(endYear, length(end.period))
+	end.DF = data.frame(year = end.year, period = end.period) 
+
+	midYears = seq(startYear, endYear, by = 1)
+	midYears = setdiff(setdiff(midYears, startYear), endYear)
+	if (length(midYears) == 0) mid.DF = data.frame()
+	else {
+		periods = c(1, 2, 3, 4)
+		mid.years = rep(midYears, each = 4)
+		mid.period = rep(periods, length(midYears))
+		mid.DF = data.frame(year = mid.years, period = mid.period) 
+	}
+
+	return(rbind(start.DF, mid.DF, end.DF))
+}
+
 # 조회된 데이터를 파일로 저장
 f_dongToFile = function(dongCode, from, to, f_name) {
   for (srhYear in from:to) {
@@ -181,16 +206,17 @@ f_dongToFile = function(dongCode, from, to, f_name) {
 }
 
 # 입력으로 받은 동코드들에 대해서 정해진 기간의 데이터를 가져온다.
-f_crawler = function(dongCodes, fromYear, toYear, prefix, f_name) { 
-  msg = paste(fromYear, "~" , toYear, prefix, "started", sep = " ")
+f_crawler = function(gugunCodes, fromYear, toYear,  prefix, f_name) { 
+	msg = paste0(fromYear, "~", toYear, " for ", prefix) 
   info(logger, msg)
-  for (curGugunCode in guguns[114:nrow(guguns),2]) { 
+
+  for (curGugunCode in gugunCodes) { 
     startTime = Sys.time()
     dongCodes = data.frame()
     result = data.frame()
-    curDongs = subset(dongs, gugunCode == curGugunCode)
+    curDongs = subset(dongs, gugunCode == curGugunCode)[,3]
     for (year in fromYear:toYear) {
-      result = apply(as.data.frame(curDongs[,3]), 1, f_dongYearData, year, 
+      result = apply(as.data.frame(curDongs), 1, f_dongYearData, year, 
                      year, f_name)
       result = do.call("rbind", result)
       fileName = paste(paste(prefix, curGugunCode, year, sep="_"), "rds", sep=".")
@@ -198,11 +224,11 @@ f_crawler = function(dongCodes, fromYear, toYear, prefix, f_name) {
     }
     endTime = Sys.time()
     
-    gugunIdx = which(curGugunCode == guguns$gugunCode)
-    pct = round((gugunIdx / nrow(guguns)) * 100, 2)
+    gugunIdx = which(curGugunCode == gugunCodes)
+    pct = round((gugunIdx / length(gugunCodes)) * 100, 2)
     
     timeTakes = difftime(endTime, startTime)
-    remainTimes = (nrow(guguns) - gugunIdx) * timeTakes
+    remainTimes = (length(gugunCodes) - gugunIdx) * timeTakes
     
     msgTimeTakes = round(as.numeric(timeTakes, units = "mins"))
     msg = paste(curGugunCode, "takes", msgTimeTakes, "mins")
@@ -217,6 +243,6 @@ f_crawler = function(dongCodes, fromYear, toYear, prefix, f_name) {
     message(paste0(pct, "% done.")) 
     info(logger, paste0(pct, "% done.")) 
   } 
-  msg = paste(from, "~" , to, prefix, "ended", sep = " ")
+  msg = paste(fromYear, "~" , toYear, prefix, "ended", sep = " ")
   info(logger, msg)
 }
