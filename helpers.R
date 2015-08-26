@@ -30,30 +30,30 @@ f_readUrl = function(
   while (tryCount <= 10) {
     withRestarts(
       tryCatch(
-{
-  msg = paste0("tring to read, ", dongCode, "-", year, "-", period)  
-  debug(logger, msg)
-  url = paste0("http://rt.molit.go.kr/rtApt.do?", 
-               "cmd=get", qryType, "AptLocal&dongCode=", 
-               dongCode, "&danjiCode=ALL&srhYear=", year,
-               "&srhPeriod=", period, "&gubunRadio2=1") 
-  rawData = readLines(url, encoding="UTF-8")           
-  data = fromJSON(rawData) 
-  return(data)
-},
-warning = warning,
-error = error
+        {
+          msg = paste0("tring to read, ", dongCode, "-", year, "-", period)  
+          debug(logger, msg)
+          url = paste0("http://rt.molit.go.kr/rtApt.do?", 
+                       "cmd=get", qryType, "AptLocal&dongCode=", 
+                       dongCode, "&danjiCode=ALL&srhYear=", year,
+                       "&srhPeriod=", period, "&gubunRadio2=1") 
+          rawData = readLines(url, encoding="UTF-8")           
+          data = fromJSON(rawData) 
+          return(data)
+        },
+        warning = warning,
+        error = error
       ),
-updateTryCount = function() {
-  msg = paste(qryType, dongCode, year, period, sep = "-")
-  msg = paste0(msg, ", at tryCount: ", tryCount)
-  info(logger, msg)  
-  tryCount <<- tryCount + 1
-}
+      updateTryCount = function() {
+        msg = paste(qryType, dongCode, year, period, sep = "-")
+        msg = paste0(msg, ", at tryCount: ", tryCount)
+        info(logger, msg)  
+        tryCount <<- tryCount + 1
+      }
     )
   }
-# tryCount 가 3보다 커지면 그냥 NULL 을 반환
-return(NULL)
+  # tryCount 가 3보다 커지면 그냥 NULL 을 반환
+  return(NULL)
 }
 
 # 아파트 정보에 추가적인 정보를 생성한다.
@@ -180,8 +180,8 @@ f_dongToFile = function(dongCode, from, to, f_name) {
   }  
 }
 
-# 대량의 데이터를 가져온다.
-f_crawler = function(fromYear, toYear, prefix, f_name) { 
+# 입력으로 받은 동코드들에 대해서 정해진 기간의 데이터를 가져온다.
+f_crawler = function(dongCodes, fromYear, toYear, prefix, f_name) { 
   msg = paste(fromYear, "~" , toYear, prefix, "started", sep = " ")
   info(logger, msg)
   for (curGugunCode in guguns[114:nrow(guguns),2]) { 
