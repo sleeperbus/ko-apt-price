@@ -192,7 +192,9 @@ shinyServer(function(input, output, clientData, session){
 		lineDF = subset(pointDF, FREQ > 3)
     if (nrow(lineDF) == 0) defaultDF = pointDF
     else defaultDF = lineDF
-		
+	
+		# 만약 전세라면 추세선을 그릴 때 반전세들은 제외해야 한다.	
+		if (newType() == "r") defaultDF = subset(defaultDF, MONTHLY == 0)
 		graph = ggvis(defaultDF, x=~SALE_DATE, y=~TRADE_AMT, fill=~GROUP, stroke=~GROUP) %>%
 		group_by(GROUP)
   
