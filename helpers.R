@@ -165,6 +165,7 @@ f_dongYearData = function(dongCode, from, to, f_name) {
   return(apts) 
 }
 
+# 두 기간 사이에 걸쳐진 분기들을 반환한다.
 f_periods = function(startYear, startPeriod, endYear, endPeriod) {
 	if ((startYear * 100 + startPeriod) > (endYear * 100 + endPeriod))
 		return(NULL)
@@ -205,7 +206,7 @@ f_dongToFile = function(dongCode, from, to, f_name) {
   }  
 }
 
-# 입력으로 받은 동코드들에 대해서 정해진 기간의 데이터를 가져온다.
+# 입력으로 받은 구군코드들에 대해서 정해진 기간의 데이터를 가져온다.
 f_crawler = function(gugunCodes, fromYear, toYear,  prefix, f_name) { 
 	msg = paste0(fromYear, "~", toYear, " for ", prefix) 
   info(logger, msg)
