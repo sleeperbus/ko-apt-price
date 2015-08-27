@@ -9,11 +9,27 @@ dygraph(lungDeaths) %>% dyRangeSelector()
 
 
 ################################################################################
-# 인천서구 데이터로 놀이
+# 서구 28260
+# 계양구 28245
+# 김포시 41570
 ################################################################################
 library(plyr)
+library(RColorBrewer)
 source("helpers.R")
-apts = f_readLocalGugunData("t", "28260", 2010, 2015)
-countByTime = count(apts, c("SALE_YEAR", "SALE_MONTH"))
-z = ts(data = countByTime$freq, start = c(2006, 1), frequency = 12)
-dygraph(z)
+region_1 = f_readLocalGugunData("t", "28260", 2010, 2015)
+region_2 = f_readLocalGugunData("t", "28245", 2010, 2015)
+region_3 = f_readLocalGugunData("t", "41570", 2010, 2015)
+count_1 = count(region_1, c("SALE_YEAR", "SALE_MONTH"))
+count_2 = count(region_2, c("SALE_YEAR", "SALE_MONTH"))
+count_3 = count(region_3, c("SALE_YEAR", "SALE_MONTH"))
+x = ts(data = count_1$freq, start = c(2006, 1), frequency = 12)
+y = ts(data = count_2$freq, start = c(2006, 1), frequency = 12) 
+z = ts(data = count_3$freq, start = c(2006, 1), frequency = 12) 
+data = cbind(x, y, z)
+
+dygraph(data) %>% dyRangeSelector() %>%
+  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1"))
+
+dygraph(data, main = "APT Prices") %>
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)
