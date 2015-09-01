@@ -28,7 +28,7 @@ z = ts(data = count_3$freq, start = c(2006, 1), frequency = 12)
 data = cbind(x, y, z)
 
 dygraph(data) %>% dyRangeSelector() %>%
-  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1"))
+  dyOptions(colors = RColorBrwer::brewer.pal(3, "Set1"))
 
 dygraph(data, main = "APT Prices") %>%
   dyHighlight(highlightCircleSize = 5, 
@@ -40,22 +40,5 @@ dygraph(data, main = "APT Prices") %>%
 library(lubridate)
 trade = f_readLocalGugunData("t", "28260", 2006, 2015)
 rent = f_readLocalGugunData("r", "28260", 2006, 2015)
-trade$TYPE = "TRADE"
-rent$TYPE = "RENT"
-trade = trade[, c("TYPE", "APT_CODE", "SALE_MONTH", "SALE_DAYS", "AREA", 
-                  "SALE_YEAR",  "SALE_DATE", "REAL_AREA", "TRADE_AMT")]
-rent = subset(rent, MONTHLY == 0)
-rent = rent[, c("TYPE", "APT_CODE", "SALE_MONTH", "SALE_DAYS", "AREA", 
-                "SALE_YEAR",  "SALE_DATE", "REAL_AREA", "TRADE_AMT")]
-
-# 월별데이터로 변형한다.
-trade$MONTH = floor_date(trade$SALE_DATE, "month")
-rent$MONTH = floor_date(rent$SALE_DATE, "month")
-
-# 아파트, 월별, 전용면적별로 평균가격을 구한다.
-avg.trade = ddply(trade, .(APT_CODE, AREA, MONTH), summarise, mean(TRADE_AMT))
-str(avg.trade)
-head(avg.trade)
-
 
 
