@@ -16,9 +16,9 @@ dygraph(lungDeaths) %>% dyRangeSelector()
 library(plyr)
 library(RColorBrewer)
 source("helpers.R")
-region_1 = f_readLocalGugunData("t", "28260", 2010, 2015)
-region_2 = f_readLocalGugunData("t", "28245", 2010, 2015)
-region_3 = f_readLocalGugunData("t", "41570", 2010, 2015)
+region_1 = f_readLocalGugunData("t", "28260", 2006, 2015)
+region_2 = f_readLocalGugunData("t", "28245", 2006, 2015)
+region_3 = f_readLocalGugunData("t", "41570", 2006, 2015)
 count_1 = count(region_1, c("SALE_YEAR", "SALE_MONTH"))
 count_2 = count(region_2, c("SALE_YEAR", "SALE_MONTH"))
 count_3 = count(region_3, c("SALE_YEAR", "SALE_MONTH"))
@@ -30,6 +30,32 @@ data = cbind(x, y, z)
 dygraph(data) %>% dyRangeSelector() %>%
   dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1"))
 
-dygraph(data, main = "APT Prices") %>
+dygraph(data, main = "APT Prices") %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)
+
+################################################################################
+# 전세가 대비 매매가
+################################################################################
+library(lubridate)
+trade = f_readLocalGugunData("t", "28260", 2006, 2015)
+rent = f_readLocalGugunData("r", "28260", 2006, 2015)
+trade$TYPE = "TRADE"
+rent$TYPE = "RENT"
+trade = trade[, c("TYPE", "APT_CODE", "SALE_MONTH", "SALE_DAYS", "AREA", 
+                  "SALE_YEAR",  "SALE_DATE", "REAL_AREA", "TRADE_AMT")]
+rent = subset(rent, MONTHLY == 0)
+rent = rent[, c("TYPE", "APT_CODE", "SALE_MONTH", "SALE_DAYS", "AREA", 
+                "SALE_YEAR",  "SALE_DATE", "REAL_AREA", "TRADE_AMT")]
+
+# 월별데이터로 변형한다.
+trade$MONTH = floor_date(trade$SALE_DATE, "month")
+rent$MONTH = floor_date(rent$SALE_DATE, "month")
+
+# 아파트, 월별, 전용면적별로 평균가격을 구한다.
+avg.trade = ddply(trade, .(APT_CODE, AREA, MONTH), summarise, mean(TRADE_AMT))
+str(avg.trade)
+head(avg.trade)
+
+
+
