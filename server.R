@@ -120,7 +120,11 @@ shinyServer(function(input, output, clientData, session){
 		uniqueApts = uniqueApts[!duplicated(uniqueApts),]
 		aptNames = as.list(uniqueApts[,2])
 		names(aptNames) = uniqueApts[,1]
-		checkboxGroupInput("aptCodes", "", choices=aptNames) 
+		# checkboxGroupInput("aptCodes", "", choices=aptNames) 
+		selectizeInput("aptCodes", "아파트를 선택하세요.", choices=aptNames, 
+		               multiple = TRUE, options=list(
+		                placeholder="여러 아파트를 선택하실 수 있습니다.",
+		                onInitialize=I('function() { this.setValue(""); }')))
 		})    
 	
 	observe({
