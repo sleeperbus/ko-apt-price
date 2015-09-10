@@ -1,5 +1,6 @@
 library(shiny)
 library(plyr)
+library(dygraphs)
 
 sido = readRDS("data/sido.rds")
 sido$sidoCode = as.character(sido$sidoCode)
@@ -116,8 +117,8 @@ shinyServer(function(input, output, clientData, session){
     if (is.null(apts)) return(NULL)
 		aptNames = list()
 		uniqueApts = apts[, c("APT_NAME", "APT_CODE")]
-    uniqueApts = uniqueApts[with(uniqueApts, order(APT_NAME)), ]
 		uniqueApts = uniqueApts[!duplicated(uniqueApts),]
+    uniqueApts = uniqueApts[with(uniqueApts, order(APT_NAME)), ]
 		aptNames = as.list(uniqueApts[,2])
 		names(aptNames) = uniqueApts[,1]
 		# checkboxGroupInput("aptCodes", "", choices=aptNames) 
@@ -162,7 +163,7 @@ shinyServer(function(input, output, clientData, session){
     gugunName = gugun[which(input$gugun == gugun$gugunCode), c("gugunName")]
     gugunName = paste(gugunName, "거래량")
     ggvis(apts, x=~SALE_DATE, fill := "#fff8dc") %>%
-      layer_histograms(width=90) %>%
+      layer_histograms(width=30) %>%
   		add_axis("x", title="거래일") %>% 
   		add_axis("x", title=gugunName, title_offset=20, orient="top", ticks=0, 
                properties=axis_props(
