@@ -167,28 +167,28 @@ f_dongYearData = function(dongCode, from, to, f_name) {
 
 # 두 기간 사이에 걸쳐진 분기들을 반환한다.
 f_periods = function(startYear, startPeriod, endYear, endPeriod) {
-	if ((startYear * 100 + startPeriod) > (endYear * 100 + endPeriod))
-		return(NULL)
-
-	start.period = seq(startPeriod, 4, by = 1)
-	start.year = rep(startYear, length(start.period))
-	start.DF = data.frame(year = start.year, period = start.period) 
-
-	end.period = seq(1, endPeriod, by = 1)
-	end.year = rep(endYear, length(end.period))
-	end.DF = data.frame(year = end.year, period = end.period) 
-
-	midYears = seq(startYear, endYear, by = 1)
-	midYears = setdiff(setdiff(midYears, startYear), endYear)
-	if (length(midYears) == 0) mid.DF = data.frame()
-	else {
-		periods = c(1, 2, 3, 4)
-		mid.years = rep(midYears, each = 4)
-		mid.period = rep(periods, length(midYears))
-		mid.DF = data.frame(year = mid.years, period = mid.period) 
-	}
-
-	return(rbind(start.DF, mid.DF, end.DF))
+  if ((startYear * 100 + startPeriod) > (endYear * 100 + endPeriod))
+    return(NULL)
+  
+  start.period = seq(startPeriod, 4, by = 1)
+  start.year = rep(startYear, length(start.period))
+  start.DF = data.frame(year = start.year, period = start.period) 
+  
+  end.period = seq(1, endPeriod, by = 1)
+  end.year = rep(endYear, length(end.period))
+  end.DF = data.frame(year = end.year, period = end.period) 
+  
+  midYears = seq(startYear, endYear, by = 1)
+  midYears = setdiff(setdiff(midYears, startYear), endYear)
+  if (length(midYears) == 0) mid.DF = data.frame()
+  else {
+    periods = c(1, 2, 3, 4)
+    mid.years = rep(midYears, each = 4)
+    mid.period = rep(periods, length(midYears))
+    mid.DF = data.frame(year = mid.years, period = mid.period) 
+  }
+  
+  return(rbind(start.DF, mid.DF, end.DF))
 }
 
 # 조회된 데이터를 파일로 저장
@@ -208,9 +208,9 @@ f_dongToFile = function(dongCode, from, to, f_name) {
 
 # 입력으로 받은 구군코드들에 대해서 정해진 기간의 데이터를 가져온다.
 f_crawler = function(gugunCodes, fromYear, toYear,  prefix, f_name) { 
-	msg = paste0(fromYear, "~", toYear, " for ", prefix) 
+  msg = paste0(fromYear, "~", toYear, " for ", prefix) 
   info(logger, msg)
-
+  
   for (curGugunCode in gugunCodes) { 
     startTime = Sys.time()
     dongCodes = data.frame()
