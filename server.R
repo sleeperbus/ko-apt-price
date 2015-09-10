@@ -1,6 +1,5 @@
 library(shiny)
 library(plyr)
-library(dygraphs)
 
 sido = readRDS("data/sido.rds")
 sido$sidoCode = as.character(sido$sidoCode)

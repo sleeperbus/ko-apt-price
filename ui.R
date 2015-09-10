@@ -1,6 +1,5 @@
 library(shiny)
 library(ggvis)
-library(shinydashboard)
 
 sido = readRDS("data/sido.rds")
 sido$sidoCode = as.character(sido$sidoCode)
