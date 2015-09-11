@@ -38,19 +38,27 @@ dygraph(data, main = "APT Prices") %>%
 # 전세가 대비 매매가
 ################################################################################
 library(lubridate)
+library(reshape2)
 trade = f_readLocalGugunData("t", "28260", 2006, 2015)
 rent = f_readLocalGugunData("r", "28260", 2006, 2015)
 trade$TYPE = "TRADE"
 rent$TYPE = "RENT"
-trade = trade[, c("TYPE", "APT_CODE", "SALE_MONTH", "SALE_DAYS", "AREA", 
+trade = trade[, c("TYPE", "APT_CODE", "SALE_MONTH", "SALE_DAYS", "AREA", "DONG_CODE",
                   "SALE_YEAR",  "SALE_DATE", "REAL_AREA", "TRADE_AMT")]
 rent = subset(rent, MONTHLY == 0)
-rent = rent[, c("TYPE", "APT_CODE", "SALE_MONTH", "SALE_DAYS", "AREA", 
+rent = rent[, c("TYPE", "APT_CODE", "SALE_MONTH", "SALE_DAYS", "AREA", "DONG_CODE",
                 "SALE_YEAR",  "SALE_DATE", "REAL_AREA", "TRADE_AMT")]
 
 # 월별데이터로 변형한다.
 trade$MONTH = floor_date(trade$SALE_DATE, "month")
 rent$MONTH = floor_date(rent$SALE_DATE, "month")
+
+# 동별 데이터로 바꾼다.
+by.dong = count(trade, vars = c("DONG_CODE", "MONTH"))
+by.dong = dcast(by.dong, MONTH ~ DONG_CODE, mean, na.rm = T, value.var = "freq")
+by.dong$MONTH = NULL
+ts.dong = ts(as.matrix(by.dong), start = c(2006, 1), frequency = 12)
+dygraph(ts.dong) %>% dyRangeSelector()
 
 # 아파트, 월별, 전용면적별로 평균가격을 구한다.
 avg.trade = ddply(trade, .(APT_CODE, AREA, MONTH), summarise, mean(TRADE_AMT))
