@@ -38,7 +38,7 @@ shinyUI(
              hr(),
              fluidRow(
                column(7, ggvisOutput("plotPoint")),
-               column(5, ggvisOutput("plotHist"))
+               column(5, dygraphOutput("plotHist"))
              )             
     ),
     tabPanel(

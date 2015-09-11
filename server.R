@@ -3,6 +3,8 @@
 ################################################################################
 library(shiny)
 library(plyr)
+library(lubridate)
+library(dygraphs)
 
 # 각종 코드 값은 처음 한 번만 읽어들인다.
 sido = readRDS("data/sido.rds")
@@ -188,23 +190,41 @@ shinyServer(function(input, output, clientData, session){
   #-----------------------------------------------------------------------------
   # gugunData 의 내용이 변경되면 해당 구군의 거래량을 갱신한다.
   #-----------------------------------------------------------------------------
-  observe({
+#   observe({
+#     message("graph gugun histogram in")
+#     apts = gugunData()
+#     if (is.null(apts)) return(NULL)
+#     
+#     gugunName = gugun[which(input$gugun == gugun$gugunCode), c("gugunName")]
+#     gugunName = paste(gugunName, "거래량")
+    
+#     ggvis(apts, x=~SALE_DATE, fill := "#fff8dc") %>%
+#       layer_histograms(width=30) %>%
+#       add_axis("x", title="거래일") %>% 
+#       add_axis("x", title=gugunName, title_offset=20, orient="top", ticks=0, 
+#                properties=axis_props(
+#                  axis=list(stroke="white"), 
+#                  labels=list(fontSize=0))) %>%  
+#       add_axis("y", title="거래량", title_offset=70) %>%
+#       set_options(width="auto") %>%
+#       bind_shiny("plotHist")
+#   })
+  
+  output$plotHist = renderDygraph({
     message("graph gugun histogram in")
     apts = gugunData()
     if (is.null(apts)) return(NULL)
     
     gugunName = gugun[which(input$gugun == gugun$gugunCode), c("gugunName")]
     gugunName = paste(gugunName, "거래량")
-    ggvis(apts, x=~SALE_DATE, fill := "#fff8dc") %>%
-      layer_histograms(width=30) %>%
-      add_axis("x", title="거래일") %>% 
-      add_axis("x", title=gugunName, title_offset=20, orient="top", ticks=0, 
-               properties=axis_props(
-                 axis=list(stroke="white"), 
-                 labels=list(fontSize=0))) %>%  
-      add_axis("y", title="거래량", title_offset=70) %>%
-      set_options(width="auto") %>%
-      bind_shiny("plotHist")
+    apts$MONTH = floor_date(apts$SALE_DATE, "month")
+    trade = count(apts, vars=c("MONTH"))
+    trade$MONTH = NULL
+    ts.trade = ts(as.matrix(trade), start = c(newStartYear(), 1), frequency = 12)
+    dygraph(ts.trade, main=gugunName) %>% dyRangeSelector() %>%
+      dyOptions(colors = RColorBrewer::brewer.pal(3, "Set2"), fillGraph = TRUE) %>%
+      dyAxis("x", drawGrid = FALSE) %>%
+      dyEvent(date = "2013-10-05", "지호준 결혼", labelLoc = "bottom")
   })
   
   #-----------------------------------------------------------------------------
