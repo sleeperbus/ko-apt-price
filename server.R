@@ -1,6 +1,10 @@
+################################################################################
+# 유저의 요청을 처리한다.
+################################################################################
 library(shiny)
 library(plyr)
 
+# 각종 코드 값은 처음 한 번만 읽어들인다.
 sido = readRDS("data/sido.rds")
 sido$sidoCode = as.character(sido$sidoCode)
 sido$sidoName = as.character(sido$sidoName)
@@ -17,7 +21,9 @@ dong$dongCode = as.character(dong$dongCode)
 dong$dongName = as.character(dong$dongName) 
 
 shinyServer(function(input, output, clientData, session){  
+  #-----------------------------------------------------------------------------
   # 거래유형에 따른 툴팁
+  #-----------------------------------------------------------------------------
   tooltip = function(df) {
     message("tooltipForTrade In")
     if (is.null(df)) return(NULL)
@@ -39,41 +45,53 @@ shinyServer(function(input, output, clientData, session){
     return(msg)
   }
   
-  # 새롭게 선택된 동코드를 반환
+  #-----------------------------------------------------------------------------
+  # 새롭게 선택된 구군코드를 반환
+  #-----------------------------------------------------------------------------
   newGugunCode = eventReactive(input$refreshButton, { 
     message("newGugunCode in")
     message(paste("newGugunCode is", input$gugun))
     input$gugun
   })
   
-  # 새롭게 선택된 구군코드를 반환
+  #-----------------------------------------------------------------------------
+  # 새롭게 선택된 동코드를 반환
+  #-----------------------------------------------------------------------------
   newDongCode = eventReactive(input$refreshButton, { 
     message("newDongCode in")
     message(paste("newDongCode is", input$dong))
     input$dong
   })
   
-  # 새롭게 선택된 시작연도
+  #-----------------------------------------------------------------------------
+  # 선택된 시작연도
+  #-----------------------------------------------------------------------------
   newStartYear = eventReactive(input$refreshButton, { 
     message("newStartyear In")
     message(paste("current start year", input$period[1]))
     return(input$period[1])
   })
   
-  # 새롭게 선택된 종료연도
+  #-----------------------------------------------------------------------------
+  # 선택된 종료연도
+  #-----------------------------------------------------------------------------
   newEndYear = eventReactive(input$refreshButton, {
     message("newEndyear In")
     message(paste("current end year", input$period[2]))
     return(input$period[2])
   })
   
+  #-----------------------------------------------------------------------------
   # 매매, 전세인지 반환
+  #-----------------------------------------------------------------------------
   newType = eventReactive(input$refreshButton, {
     message("newType In")
     return(input$type)
   })
   
+  #-----------------------------------------------------------------------------
   # 구군 데이터를 반환한다.
+  #-----------------------------------------------------------------------------
   gugunData = reactive({ 
     message("gugunData In")
     curGugunCode = newGugunCode()
@@ -93,7 +111,9 @@ shinyServer(function(input, output, clientData, session){
     return(apts)
   })
   
+  #-----------------------------------------------------------------------------
   # 동 데이터를 반환한다.
+  #-----------------------------------------------------------------------------
   dongData = reactive({
     message("dongData In")
     gugunApts = gugunData()
@@ -110,6 +130,10 @@ shinyServer(function(input, output, clientData, session){
     return(dongApts) 
   })
   
+  #-----------------------------------------------------------------------------
+  # 선택된 동데이터를 기반으로 아파트 목록을 select box 에 출력한다.
+  # - 정렬을 시키는데, 정렬이 제대로 안된다.
+  #-----------------------------------------------------------------------------
   output$aptNames = renderUI({
     message("aptNames in")
     apts = dongData() 
@@ -127,6 +151,10 @@ shinyServer(function(input, output, clientData, session){
                      onInitialize=I('function() { this.setValue(""); }')))
   })    
   
+  #-----------------------------------------------------------------------------
+  # sido 코드가 변경되었을 경우 UI 변경
+  # - 구군코드와 동코드의 내용을 새로 채운다.
+  #-----------------------------------------------------------------------------
   observe({
     message("observe gugun in")
     sidoCode = input$sido    
@@ -140,6 +168,10 @@ shinyServer(function(input, output, clientData, session){
                       choices=codes, selected=selectedGugun[1,2])     
   })
   
+  #-----------------------------------------------------------------------------
+  # gugun 코드가 변경되었을 경우 UI 변경
+  # - 동코드의 내용을 새로 채운다.
+  #-----------------------------------------------------------------------------
   observe({
     message("observe dong in")
     sidoCode = input$sido
@@ -153,7 +185,9 @@ shinyServer(function(input, output, clientData, session){
     updateSelectInput(session, "dong", "동", choices=codes, selected=selectedDong[1,3])  
   })
   
-  # 선택된 구군 지역 거래량
+  #-----------------------------------------------------------------------------
+  # gugunData 의 내용이 변경되면 해당 구군의 거래량을 갱신한다.
+  #-----------------------------------------------------------------------------
   observe({
     message("graph gugun histogram in")
     apts = gugunData()
@@ -173,6 +207,10 @@ shinyServer(function(input, output, clientData, session){
       bind_shiny("plotHist")
   })
   
+  #-----------------------------------------------------------------------------
+  # 동별 아파트 매매가 변경
+  # - 동데이터가 변경되거나 선택된 아파트, 전용면적이 변경되면 그래프 갱신
+  #-----------------------------------------------------------------------------
   observe({
     message("graph dong points in")
     
