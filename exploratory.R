@@ -58,7 +58,8 @@ by.dong = count(trade, vars = c("DONG_CODE", "MONTH"))
 by.dong = dcast(by.dong, MONTH ~ DONG_CODE, mean, na.rm = T, value.var = "freq")
 by.dong$MONTH = NULL
 ts.dong = ts(as.matrix(by.dong), start = c(2006, 1), frequency = 12)
-dygraph(ts.dong) %>% dyRangeSelector()
+dygraph(ts.dong) %>% dyRangeSelector() %>%
+  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1"))
 
 # 아파트, 월별, 전용면적별로 평균가격을 구한다.
 avg.trade = ddply(trade, .(APT_CODE, AREA, MONTH), summarise, mean(TRADE_AMT))
