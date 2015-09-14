@@ -37,11 +37,17 @@ dygraph(scaled.data) %>% dyRangeSelector()
 # 2010년도 데이터만 추출해서 unitprice 의 histogram 
 region.2010 = subset(region, SALE_YEAR == 2010)
 ggvis(data=region.2010, x=~UNIT_PRICE) %>%
-  layer_histograms()
-  
-  
+  layer_histograms() 
+ggvis(data=region.2010, x=~UNIT_PRICE) %>%
+  layer_densities() 
 
-
+# 2014년도 데이터만 추출해서 unitprice 의 histogram 
+region.2014 = subset(region, SALE_YEAR == 2014)
+ggvis(data=region.2014, x=~UNIT_PRICE) %>%
+  layer_histograms() 
+ggvis(data=region.2014, x=~UNIT_PRICE, fill=~DONG_CODE) %>%
+  group_by(DONG_CODE) %>%
+  layer_histograms(opacity := 0.4) 
 
 ################################################################################
 # 전세가 대비 매매가
