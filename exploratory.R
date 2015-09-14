@@ -16,23 +16,37 @@ dygraph(lungDeaths) %>% dyRangeSelector()
 library(plyr)
 library(RColorBrewer)
 source("helpers.R")
-region_1 = f_readLocalGugunData("t", "28260", 2006, 2015)
-region_2 = f_readLocalGugunData("t", "28245", 2006, 2015)
-region_3 = f_readLocalGugunData("t", "41570", 2006, 2015)
-count_1 = count(region_1, c("SALE_YEAR", "SALE_MONTH"))
-count_2 = count(region_2, c("SALE_YEAR", "SALE_MONTH"))
-count_3 = count(region_3, c("SALE_YEAR", "SALE_MONTH"))
-x = ts(data = count_1$freq, start = c(2006, 1), frequency = 12)
-y = ts(data = count_2$freq, start = c(2006, 1), frequency = 12) 
-z = ts(data = count_3$freq, start = c(2006, 1), frequency = 12) 
-data = cbind(x, y, z)
+region1 = f_readLocalGugunData("t", "28260", 2006, 2015)
+region2 = f_readLocalGugunData("t", "28245", 2006, 2015)
+region3 = f_readLocalGugunData("t", "41570", 2006, 2015)
 
-dygraph(data) %>% dyRangeSelector() %>%
-  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1"))
+# 컬럼 추가
+region1$SALE_DATE = floor_date(region1$SALE_DATE, "month")
+region1$UNIT_PRICE = with(region1, round(TRADE_AMT/AREA))
 
-dygraph(data, main = "APT Prices") %>%
-  dyHighlight(highlightCircleSize = 5, 
-              highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)
+# 거래량
+volume1 = count(region1, c("SALE_YEAR", "SALE_MONTH"))
+volume2 = count(region2, c("SALE_YEAR", "SALE_MONTH"))
+volume3 = count(region3, c("SALE_YEAR", "SALE_MONTH"))
+
+ts.v1 = ts(data = volume1$freq, start = c(2006, 1), frequency = 12)
+ts.v2 = ts(data = volume2$freq, start = c(2006, 1), frequency = 12) 
+ts.v3 = ts(data = volume3$freq, start = c(2006, 1), frequency = 12) 
+
+# 매매물건의 m2당 가격변화
+unitprice1 = ddply(region1, .(SALE_DATE), summarise, price = mean(UNIT_PRICE))
+ts.u1 = ts(data = unitprice1$price, start = c(2006, 1), frequency = 12)
+data = cbind(ts.v1, ts.u1)
+
+dygraph(data) %>% dyRangeSelector()
+
+# 스케일링
+scaled.volume1 = transform(volume1, freq = scale(freq))
+scaled.unitprice1 = transform(unitprice1, price = scale(price))
+ts.scaled.v1 = ts(data = scaled.volume1$freq, start = c(2006, 1), frequency = 12)
+ts.scaled.u1 = ts(data = scaled.unitprice1$price, start = c(2006, 1), frequency = 12)
+scaled.data = cbind(ts.scaled.v1, ts.scaled.u1)
+dygraph(scaled.data) %>% dyRangeSelector()
 
 ################################################################################
 # 전세가 대비 매매가
@@ -65,6 +79,4 @@ dygraph(ts.dong) %>% dyRangeSelector() %>%
 avg.trade = ddply(trade, .(APT_CODE, AREA, MONTH), summarise, mean(TRADE_AMT))
 str(avg.trade)
 head(avg.trade)
-
-
 
