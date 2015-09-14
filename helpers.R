@@ -272,10 +272,12 @@ f_crawler = function(gugunCodes, fromYear, toYear,  prefix, f_name) {
 }
 
 #-------------------------------------------------------------------------------
-# 특정 구군코드의 데이터를 읽어들인다.
+# 특정기간 구군의 데이터를 읽어들인다.
 #-------------------------------------------------------------------------------
 f_readLocalGugunData = function(tradeType, gugunCode, fromYear, toYear) {
-  files = dir("data", paste0(tradeType, "_", gugunCode)) 
+  files = sapply(fromYear:toYear, 
+                 function(year) dir("data", 
+                                    paste0(tradeType, "_", gugunCode, "_", year)))
   files = sapply(files, function(fileName) file.path("data", fileName))
   result = lapply(files, function(fileName) readRDS(fileName))
   result = do.call("rbind", result)
