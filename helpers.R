@@ -1,3 +1,7 @@
+################################################################################
+# 국토교통부에 접속해서 데이터를 가져오는 함수 모음
+################################################################################
+
 library(jsonlite)
 library(stringr)
 library(log4r)
@@ -6,6 +10,7 @@ sidos = readRDS("data/sido.rds")
 guguns = readRDS("data/gugun.rds")
 dongs = readRDS("data/dong.rds")
 
+# 전역 로거
 logFileName = file.path(getwd(), paste0("log_", format(Sys.Date(), "%Y%m%d"), ".log"))
 logger = create.logger()
 logfile(logger) = logFileName
@@ -13,8 +18,11 @@ level(logger) = "INFO"
 
 savePath = file.path(getwd(), "data")
 
+#-------------------------------------------------------------------------------
 # 국토부 실거래가 사이트에 접속해서 데이터를 가져온다.
-# qryType t 매매, r 전월세
+# - qryType t 매매, r 전월세
+# - 가끔씩 request 에러가 발생하므로 10 정도는 retry 해준다.
+#-------------------------------------------------------------------------------
 f_readUrl = function(
   qryType, dongCode, year, period,
   warning = function(w) {
@@ -56,7 +64,9 @@ f_readUrl = function(
   return(NULL)
 }
 
+#-------------------------------------------------------------------------------
 # 아파트 정보에 추가적인 정보를 생성한다.
+#-------------------------------------------------------------------------------
 f_addInfo = function(apts) {
   apts$SALE_MONTH = str_pad(apts$SALE_MONTH, 2, pad="0")
   apts$SALE_DAYS= str_pad(apts$SALE_DAYS, 2, pad="0")
@@ -93,7 +103,9 @@ f_addInfo = function(apts) {
   return (apts)  
 }
 
+#-------------------------------------------------------------------------------
 # 전월세 데이터를 가져온다.
+#-------------------------------------------------------------------------------
 f_getRent = function(dongCode, year, period) {
   data = f_readUrl("Rent", dongCode, year, period)		 
   if (is.null(data)) return(NULL)
@@ -123,7 +135,9 @@ f_getRent = function(dongCode, year, period) {
   return(apts)  
 }
 
+#-------------------------------------------------------------------------------
 # 매매 데이터를 가져온다.
+#-------------------------------------------------------------------------------
 f_getTrade = function(dongCode, year, period) {
   data = f_readUrl("Trade", dongCode, year, period)		 
   if (is.null(data)) return(NULL)
@@ -153,7 +167,9 @@ f_getTrade = function(dongCode, year, period) {
   return (apts) 
 }
 
+#-------------------------------------------------------------------------------
 # 특정 동코드의 연도별 데이터를 생성한다.
+#-------------------------------------------------------------------------------
 f_dongYearData = function(dongCode, from, to, f_name) {
   apts = data.frame()
   for (srhYear in from:to) {
@@ -165,33 +181,37 @@ f_dongYearData = function(dongCode, from, to, f_name) {
   return(apts) 
 }
 
+#-------------------------------------------------------------------------------
 # 두 기간 사이에 걸쳐진 분기들을 반환한다.
+#-------------------------------------------------------------------------------
 f_periods = function(startYear, startPeriod, endYear, endPeriod) {
-	if ((startYear * 100 + startPeriod) > (endYear * 100 + endPeriod))
-		return(NULL)
-
-	start.period = seq(startPeriod, 4, by = 1)
-	start.year = rep(startYear, length(start.period))
-	start.DF = data.frame(year = start.year, period = start.period) 
-
-	end.period = seq(1, endPeriod, by = 1)
-	end.year = rep(endYear, length(end.period))
-	end.DF = data.frame(year = end.year, period = end.period) 
-
-	midYears = seq(startYear, endYear, by = 1)
-	midYears = setdiff(setdiff(midYears, startYear), endYear)
-	if (length(midYears) == 0) mid.DF = data.frame()
-	else {
-		periods = c(1, 2, 3, 4)
-		mid.years = rep(midYears, each = 4)
-		mid.period = rep(periods, length(midYears))
-		mid.DF = data.frame(year = mid.years, period = mid.period) 
-	}
-
-	return(rbind(start.DF, mid.DF, end.DF))
+  if ((startYear * 100 + startPeriod) > (endYear * 100 + endPeriod))
+    return(NULL)
+  
+  start.period = seq(startPeriod, 4, by = 1)
+  start.year = rep(startYear, length(start.period))
+  start.DF = data.frame(year = start.year, period = start.period) 
+  
+  end.period = seq(1, endPeriod, by = 1)
+  end.year = rep(endYear, length(end.period))
+  end.DF = data.frame(year = end.year, period = end.period) 
+  
+  midYears = seq(startYear, endYear, by = 1)
+  midYears = setdiff(setdiff(midYears, startYear), endYear)
+  if (length(midYears) == 0) mid.DF = data.frame()
+  else {
+    periods = c(1, 2, 3, 4)
+    mid.years = rep(midYears, each = 4)
+    mid.period = rep(periods, length(midYears))
+    mid.DF = data.frame(year = mid.years, period = mid.period) 
+  }
+  
+  return(rbind(start.DF, mid.DF, end.DF))
 }
 
+#-------------------------------------------------------------------------------
 # 조회된 데이터를 파일로 저장
+#-------------------------------------------------------------------------------
 f_dongToFile = function(dongCode, from, to, f_name) {
   for (srhYear in from:to) {
     apts = data.frame()
@@ -206,11 +226,14 @@ f_dongToFile = function(dongCode, from, to, f_name) {
   }  
 }
 
+#-------------------------------------------------------------------------------
 # 입력으로 받은 구군코드들에 대해서 정해진 기간의 데이터를 가져온다.
+# 데이터를 가져오는 실질적인 함수
+#-------------------------------------------------------------------------------
 f_crawler = function(gugunCodes, fromYear, toYear,  prefix, f_name) { 
-	msg = paste0(fromYear, "~", toYear, " for ", prefix) 
+  msg = paste0(fromYear, "~", toYear, " for ", prefix) 
   info(logger, msg)
-
+  
   for (curGugunCode in gugunCodes) { 
     startTime = Sys.time()
     dongCodes = data.frame()
@@ -248,9 +271,13 @@ f_crawler = function(gugunCodes, fromYear, toYear,  prefix, f_name) {
   info(logger, msg)
 }
 
-# 특정 구군코드의 데이터를 읽어들인다.
+#-------------------------------------------------------------------------------
+# 특정기간 구군의 데이터를 읽어들인다.
+#-------------------------------------------------------------------------------
 f_readLocalGugunData = function(tradeType, gugunCode, fromYear, toYear) {
-  files = dir("data", paste0(tradeType, "_", gugunCode)) 
+  files = sapply(fromYear:toYear, 
+                 function(year) dir("data", 
+                                    paste0(tradeType, "_", gugunCode, "_", year)))
   files = sapply(files, function(fileName) file.path("data", fileName))
   result = lapply(files, function(fileName) readRDS(fileName))
   result = do.call("rbind", result)
