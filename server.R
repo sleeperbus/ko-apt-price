@@ -32,14 +32,14 @@ shinyServer(function(input, output, clientData, session){
     apts = dongData()
     
     if (newType() == "t") {
-      codes = c("아파트", "전용면적", "매매가", "매매일")
-      row = apts[apts$ID == df$ID, c("APT_NAME", "AREA", "TRADE_AMT", "SALE_DATE")]
+      codes = c("아파트", "전용면적", "층수", "매매가", "매매일")
+      row = apts[apts$ID == df$ID, c("APT_NAME", "FLOOR", "AREA", "TRADE_AMT", "SALE_DATE")]
       if (nrow(row) > 0)
         msg = paste0(codes, ": ", format(row), collapse = "<br />") 
       else msg = NULL  
     } else {
-      codes = c("아파트", "전용면적", "보증금", "월세", "거래일")
-      row = apts[apts$ID == df$ID, c("APT_NAME", "AREA", "TRADE_AMT", "MONTHLY", "SALE_DATE")]
+      codes = c("아파트", "전용면적", "층수", "보증금", "월세", "거래일")
+      row = apts[apts$ID == df$ID, c("APT_NAME", "FLOOR", "AREA", "TRADE_AMT", "MONTHLY", "SALE_DATE")]
       if (nrow(row) > 0)
         msg = paste0(codes, ": ", format(row), collapse = "<br />") 
       else msg = NULL   
