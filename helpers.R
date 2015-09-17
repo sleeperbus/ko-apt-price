@@ -113,11 +113,11 @@ f_getRent = function(dongCode, year, period) {
   prices = as.data.frame(data[2]) 
   apts = data.frame()
   if (nrow(prices) > 0) {
-    names(aptInfo) = c("APT_NAME", "AREA_CNT", "APT_CODE", "BORM", 
-                       "BUILD_YEAR", "BUBN")
+    names(aptInfo) = c("BORN", "BUBN", "BUILD_YEAR", "AREA_CNT", "APT_NAME",
+                       "APT_CODE")
     aptInfo$DONG_CODE = dongCode
-    names(prices) = c("SALE_MONTH", "SALE_DAYS", "APT_CODE", "FLOOR", "MONTHLY",
-                      "AREA", "TRADE_AMT")
+    names(prices) = c("SALE_DAYS", "AREA", "MONTHLY", "FLOOR", "TRADE_AMT",
+                      "SALE_MONTH", "APT_CODE")
     apts = merge(aptInfo, prices, by="APT_CODE") 
     apts$SALE_YEAR = year
   } else {
@@ -146,11 +146,11 @@ f_getTrade = function(dongCode, year, period) {
   prices = as.data.frame(data[2]) 
   apts = data.frame()
   if (nrow(prices) > 0) {
-    names(aptInfo) = c("APT_NAME", "AREA_CNT", "APT_CODE", "BORM", 
-                       "BUILD_YEAR", "BUBN")
+    names(aptInfo) = c("BORN", "BUBN", "BUILD_YEAR", "AREA_CNT", "APT_NAME",
+                       "APT_CODE")
     aptInfo$DONG_CODE = dongCode
-    names(prices) = c("SALE_MONTH", "TRADE_AMT", "SALE_DAYS", "APT_CODE", 
-                      "FLOOR", "AREA")
+    names(prices) = c("SALE_DAYS", "AREA", "FLOOR", "TRADE_AMT", "SALE_MONTH",
+                      "APT_CODE")
     apts = merge(aptInfo, prices, by="APT_CODE") 
     apts$SALE_YEAR = year
   } else {
