@@ -113,7 +113,7 @@ f_getRent = function(dongCode, year, period) {
   prices = as.data.frame(data[2]) 
   apts = data.frame()
   if (nrow(prices) > 0) {
-    names(aptInfo) = c("BORN", "BUBN", "BUILD_YEAR", "AREA_CNT", "APT_NAME",
+    names(aptInfo) = c("BOBN", "BUBN", "BUILD_YEAR", "AREA_CNT", "APT_NAME",
                        "APT_CODE")
     aptInfo$DONG_CODE = dongCode
     names(prices) = c("SALE_DAYS", "AREA", "MONTHLY", "FLOOR", "TRADE_AMT",
@@ -146,7 +146,7 @@ f_getTrade = function(dongCode, year, period) {
   prices = as.data.frame(data[2]) 
   apts = data.frame()
   if (nrow(prices) > 0) {
-    names(aptInfo) = c("BORN", "BUBN", "BUILD_YEAR", "AREA_CNT", "APT_NAME",
+    names(aptInfo) = c("BOBN", "BUBN", "BUILD_YEAR", "AREA_CNT", "APT_NAME",
                        "APT_CODE")
     aptInfo$DONG_CODE = dongCode
     names(prices) = c("SALE_DAYS", "AREA", "FLOOR", "TRADE_AMT", "SALE_MONTH",
@@ -169,15 +169,19 @@ f_getTrade = function(dongCode, year, period) {
 
 #-------------------------------------------------------------------------------
 # 특정 동코드의 연도별 데이터를 생성한다.
+# [수정사항]
+#   2015.09.18  
+#     - 데이터 컬럼을 정렬한다. 
 #-------------------------------------------------------------------------------
 f_dongYearData = function(dongCode, from, to, f_name) {
   apts = data.frame()
   for (srhYear in from:to) {
     for (srhPeriod in 1:4) {
-      tempApts = f_name(dongCode, srhYear, srhPeriod)		 
+      tempApts = f_name(dongCode, srhYear, srhPeriod)		  
       apts = rbind(apts, tempApts)
     }
   }  
+  apts = apts[, order(names(apts))]
   return(apts) 
 }
 
@@ -282,3 +286,4 @@ f_readLocalGugunData = function(tradeType, gugunCode, fromYear, toYear) {
   result = lapply(files, function(fileName) readRDS(fileName))
   result = do.call("rbind", result)
 }
+
