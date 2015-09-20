@@ -26,8 +26,6 @@ files = sapply(files, function(filename) file.path("data", filename))
 names(files) = NULL
 sapply(files, function(filename) fixData(filename))
 
-f_crawler(guguns$gugunCode, 2015, 2015, "t", f_getTrade)
-f_crawler(guguns$gugunCode, 2015, 2015, "r", f_getRent)
 
 # 검증
 #testfile.1 = readRDS("data/r_11680_2011.rds")
@@ -37,3 +35,6 @@ f_crawler(guguns$gugunCode, 2015, 2015, "r", f_getRent)
 #testfile.2 = readRDS("data/t_11680_2011.rds")
 #names(testfile.2)
 #tail(testfile.2)
+
+f_crawler(guguns$gugunCode, 2015, 2015, "t", f_getTrade)
+f_crawler(guguns$gugunCode, 2015, 2015, "r", f_getRent)

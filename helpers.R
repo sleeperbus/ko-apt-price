@@ -181,7 +181,9 @@ f_dongYearData = function(dongCode, from, to, f_name) {
       apts = rbind(apts, tempApts)
     }
   }  
-  apts = apts[, order(names(apts))]
+  if (!is.null(apts)) {
+    if (nrow(apts) != 0) apts = apts[, order(names(apts))]
+  }
   return(apts) 
 }
 
