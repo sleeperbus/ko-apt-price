@@ -1,0 +1,17 @@
+{
+    "contents" : "################################################################################\n# 데이터를 가져와서 rds 형식으로 저장한다. \n# 분기별로 저장할 수 있지만, 유저는 연도별로 조회를 할 것이므로 연도별 자료를\n# 가져와서 저장한다. 분기별로 가져오는 것이 시간이 현저하게 적게 걸리기는 하는데\n# 어차피 작업은 내가 하는게 아니라, 컴퓨터가 하는 것이니...\n################################################################################\nsource(\"helpers.R\")\n\nsidos = readRDS(\"data/sido.rds\")\nguguns = readRDS(\"data/gugun.rds\")\ndongs = readRDS(\"data/dong.rds\")\n\nf_crawler(guguns$gugunCode, 2006, 2015, \"r\")\nf_crawler(guguns$gugunCode, 2006, 2015, \"t\")\n",
+    "created" : 1444723147741.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1618803049",
+    "id" : "6DD53194",
+    "lastKnownWriteTime" : 1444723183,
+    "path" : "~/Dev/ko-apt-price/data_crawler.R",
+    "project_path" : "data_crawler.R",
+    "properties" : {
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

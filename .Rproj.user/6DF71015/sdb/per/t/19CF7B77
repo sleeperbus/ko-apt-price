@@ -1,0 +1,17 @@
+{
+    "contents" : "library(dygraphs)\n################################################################################\n# dygraph 테스트\n################################################################################\nlungDeaths <- cbind(mdeaths, fdeaths)\nstr(lungDeaths)\ndygraph(lungDeaths)\ndygraph(lungDeaths) %>% dyRangeSelector()\n\n\n################################################################################\n# 서구 28260\n# 계양구 28245\n# 김포시 41570\n################################################################################\nlibrary(plyr)\nlibrary(RColorBrewer)\nsource(\"helpers.R\")\nregion_1 = f_readLocalGugunData(\"t\", \"28260\", 2006, 2015)\nregion_2 = f_readLocalGugunData(\"t\", \"28245\", 2006, 2015)\nregion_3 = f_readLocalGugunData(\"t\", \"41570\", 2006, 2015)\ncount_1 = count(region_1, c(\"SALE_YEAR\", \"SALE_MONTH\"))\ncount_2 = count(region_2, c(\"SALE_YEAR\", \"SALE_MONTH\"))\ncount_3 = count(region_3, c(\"SALE_YEAR\", \"SALE_MONTH\"))\nx = ts(data = count_1$freq, start = c(2006, 1), frequency = 12)\ny = ts(data = count_2$freq, start = c(2006, 1), frequency = 12) \nz = ts(data = count_3$freq, start = c(2006, 1), frequency = 12) \ndata = cbind(x, y, z)\n\ndygraph(data) %>% dyRangeSelector() %>%\n  dyOptions(colors = RColorBrewer::brewer.pal(3, \"Set1\"))\n\ndygraph(data, main = \"APT Prices\") %>%\n  dyHighlight(highlightCircleSize = 5, \n              highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)\n\n################################################################################\n# 전세가 대비 매매가\n################################################################################\nlibrary(lubridate)\nlibrary(reshape2)\ntrade = f_readLocalGugunData(\"t\", \"28260\", 2006, 2015)\nrent = f_readLocalGugunData(\"r\", \"28260\", 2006, 2015)\ntrade$TYPE = \"TRADE\"\nrent$TYPE = \"RENT\"\ntrade = trade[, c(\"TYPE\", \"APT_CODE\", \"SALE_MONTH\", \"SALE_DAYS\", \"AREA\", \"DONG_CODE\",\n                  \"SALE_YEAR\",  \"SALE_DATE\", \"REAL_AREA\", \"TRADE_AMT\")]\nrent = subset(rent, MONTHLY == 0)\nrent = rent[, c(\"TYPE\", \"APT_CODE\", \"SALE_MONTH\", \"SALE_DAYS\", \"AREA\", \"DONG_CODE\",\n                \"SALE_YEAR\",  \"SALE_DATE\", \"REAL_AREA\", \"TRADE_AMT\")]\n\n# 월별데이터로 변형한다.\ntrade$MONTH = floor_date(trade$SALE_DATE, \"month\")\nrent$MONTH = floor_date(rent$SALE_DATE, \"month\")\n\n# 동별 데이터로 바꾼다.\nby.dong = count(trade, vars = c(\"DONG_CODE\", \"MONTH\"))\nby.dong = dcast(by.dong, MONTH ~ DONG_CODE, mean, na.rm = T, value.var = \"freq\")\nby.dong$MONTH = NULL\nts.dong = ts(as.matrix(by.dong), start = c(2006, 1), frequency = 12)\ndygraph(ts.dong) %>% dyRangeSelector()\n\n# 아파트, 월별, 전용면적별로 평균가격을 구한다.\navg.trade = ddply(trade, .(APT_CODE, AREA, MONTH), summarise, mean(TRADE_AMT))\nstr(avg.trade)\nhead(avg.trade)\n\n\n\n",
+    "created" : 1442801765347.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1817077286",
+    "id" : "19CF7B77",
+    "lastKnownWriteTime" : 1443138130,
+    "path" : "~/Dev/ko-apt-price/exploratory.R",
+    "project_path" : "exploratory.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

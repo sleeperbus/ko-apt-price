@@ -1,0 +1,9 @@
+{
+    "path" : "~/Dev/ko-apt-price",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}
