@@ -33,13 +33,13 @@ shinyServer(function(input, output, clientData, session){
     
     if (newType() == "t") {
       codes = c("아파트", "전용면적", "층수", "매매가", "매매일")
-      row = apts[apts$ID == df$ID, c("APT_NAME", "AREA", "FLOOR", "TRADE_AMT", "SALE_DATE")]
+      row = apts[apts$ID == df$ID, c("BLDG_NM", "BLDG_AREA", "APTFNO", "SUM_AMT", "DEAL_DATE")]
       if (nrow(row) > 0)
         msg = paste0(codes, ": ", format(row), collapse = "<br />") 
       else msg = NULL  
     } else {
       codes = c("아파트", "전용면적", "층수", "보증금", "월세", "거래일")
-      row = apts[apts$ID == df$ID, c("APT_NAME", "AREA", "FLOOR", "TRADE_AMT", "MONTHLY", "SALE_DATE")]
+      row = apts[apts$ID == df$ID, c("BLDG_NM", "BLDG_AREA", "APTFNO", "SUM_AMT", "RENT_AMT", "DEAL_DATE")]
       if (nrow(row) > 0)
         msg = paste0(codes, ": ", format(row), collapse = "<br />") 
       else msg = NULL   
@@ -141,9 +141,9 @@ shinyServer(function(input, output, clientData, session){
     apts = dongData() 
     if (is.null(apts)) return(NULL)
     aptNames = list()
-    uniqueApts = apts[, c("APT_NAME", "APT_CODE")]
+    uniqueApts = apts[, c("BLDG_NM", "BLDG_CD")]
     uniqueApts = uniqueApts[!duplicated(uniqueApts),]
-    uniqueApts = uniqueApts[with(uniqueApts, order(APT_NAME)), ]
+    uniqueApts = uniqueApts[with(uniqueApts, order(BLDG_NM)), ]
     aptNames = as.list(uniqueApts[,2])
     names(aptNames) = uniqueApts[,1]
     # checkboxGroupInput("aptCodes", "", choices=aptNames) 
@@ -197,10 +197,10 @@ shinyServer(function(input, output, clientData, session){
     
     gugunName = gugun[which(input$gugun == gugun$gugunCode), c("gugunName")]
     gugunName = paste(gugunName, "거래량")
-    apts$MONTH = floor_date(apts$SALE_DATE, "month")
-    trade = count(apts, vars=c("MONTH"))
-    names(trade) = c("MONTH", "거래량")
-    trade$MONTH = NULL
+    apts$DEAL_MM = floor_date(apts$DEAL_DATE, "month")
+    trade = count(apts, vars=c("DEAL_MM"))
+    names(trade) = c("DEAL_MM", "거래량")
+    trade$DEAL_MM = NULL
     ts.trade = ts(as.matrix(trade), start = c(newStartYear(), 1), frequency = 12)
     dygraph(ts.trade, main=gugunName) %>% dyRangeSelector() %>%
       dyOptions(colors = RColorBrewer::brewer.pal(3, "Set2"), fillGraph = TRUE) %>%
@@ -222,9 +222,9 @@ shinyServer(function(input, output, clientData, session){
     aptCodes = input$aptCodes
     realArea = input$realArea
     
-    result = subset(apts, APT_CODE %in% aptCodes)
+    result = subset(apts, BLDG_CD %in% aptCodes)
     result = subset(result, REAL_AREA%in% realArea) 
-    result$APT_NAME = factor(result$APT_NAME, ordered=F)
+    result$BLDG_NM = factor(result$BLDG_NM, ordered=F)
     result$GROUP = factor(result$GROUP)
     
     # 최종 result 에서 GROUP 별로 데이터가 2개 이하이면 layer_smooths 를 
@@ -236,8 +236,8 @@ shinyServer(function(input, output, clientData, session){
     else defaultDF = lineDF
     
     # 만약 전세라면 추세선을 그릴 때 반전세들은 제외해야 한다.	
-    if (newType() == "r") defaultDF = subset(defaultDF, MONTHLY == 0)
-    graph = ggvis(defaultDF, x=~SALE_DATE, y=~TRADE_AMT, fill=~GROUP, stroke=~GROUP) %>%
+    if (newType() == "r") defaultDF = subset(defaultDF, RENT_AMT == 0)
+    graph = ggvis(defaultDF, x=~DEAL_DATE, y=~SUM_AMT, fill=~GROUP, stroke=~GROUP) %>%
       group_by(GROUP)
     
     if (nrow(lineDF) > 0) graph = graph %>% layer_smooths(span=1)
