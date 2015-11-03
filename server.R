@@ -215,8 +215,8 @@ shinyServer(function(input, output, clientData, session){
     message("graph dong points in")
     
     apts = dongData() 
-    apts$FREQ = 0
     if (is.null(apts)) return(NULL)
+    apts$FREQ = 0
     
     dongName = dong[which(dong$dongCode == apts$DONG_CODE[1]), c("dongName")]
     aptCodes = input$aptCodes
