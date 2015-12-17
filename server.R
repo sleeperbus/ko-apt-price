@@ -115,6 +115,7 @@ shinyServer(function(input, output, clientData, session){
   
   #-----------------------------------------------------------------------------
   # 동 데이터를 반환한다.
+  # 기본 동코드를 지정해준다.
   #-----------------------------------------------------------------------------
   dongData = reactive({
     message("dongData In")
@@ -122,13 +123,15 @@ shinyServer(function(input, output, clientData, session){
     if (is.null(gugunApts)) return(NULL)
     
     curDongCode = ""
+    dongApts = data.frame()
     t = try(newDongCode())
     if ("try-error" %in% class(t)) {
       curDongCode = "1168010300"
     } else curDongCode = newDongCode()
     
     dongApts = subset(gugunApts, DONG_CODE == curDongCode)
-    if (nrow(dongApts) == 0) return(NULL)
+    message(paste("row of dongData is ", nrow(dongApts)))
+#    if (nrow(dongApts) == 0) return(NULL)
     return(dongApts) 
   })
   
@@ -136,17 +139,26 @@ shinyServer(function(input, output, clientData, session){
   # 선택된 동데이터를 기반으로 아파트 목록을 select box 에 출력한다.
   # - 정렬을 시키는데, 정렬이 제대로 안된다.
   #-----------------------------------------------------------------------------
+  
   output$aptNames = renderUI({
     message("aptNames in")
     apts = dongData() 
-    if (is.null(apts)) return(NULL)
     aptNames = list()
+    if (nrow(apts) == 0) {
+      selectizeInput("aptCodes", "아파트를 선택하세요.", choices=aptNames, 
+                   multiple = TRUE, options=list(
+                     placeholder="해당 지역에 아파트가 없습니다.",
+                     onInitialize=I('function() { this.setValue(""); }')))
+      return(NULL)
+       
+    }
+    
     uniqueApts = apts[, c("BLDG_NM", "BLDG_CD")]
     uniqueApts = uniqueApts[!duplicated(uniqueApts),]
     uniqueApts = uniqueApts[with(uniqueApts, order(BLDG_NM)), ]
     aptNames = as.list(uniqueApts[,2])
     names(aptNames) = uniqueApts[,1]
-    # checkboxGroupInput("aptCodes", "", choices=aptNames) 
+    
     selectizeInput("aptCodes", "아파트를 선택하세요.", choices=aptNames, 
                    multiple = TRUE, options=list(
                      placeholder="여러 아파트를 선택하실 수 있습니다.",
@@ -210,14 +222,18 @@ shinyServer(function(input, output, clientData, session){
   #-----------------------------------------------------------------------------
   # 동별 아파트 매매가 변경
   # - 동데이터가 변경되거나 선택된 아파트, 전용면적이 변경되면 그래프 갱신
+  # - 해당 동에 데이터가 존재하지 않으면 그래프를 클리어 한다.
   #-----------------------------------------------------------------------------
   observe({
     message("graph dong points in")
     
     apts = dongData() 
-    if (is.null(apts)) return(NULL)
-    apts$FREQ = 0
+    if (nrow(apts) == 0) {
+      ggvis(apts, x=~DEAL_DATE, y=~SUM_AMT) %>% layer_points() %>% bind_shiny("plotPoint")
+      return(NULL)
+    }
     
+    apts$FREQ = 0 
     dongName = dong[which(dong$dongCode == apts$DONG_CODE[1]), c("dongName")]
     aptCodes = input$aptCodes
     realArea = input$realArea
