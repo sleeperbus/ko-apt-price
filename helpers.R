@@ -75,7 +75,7 @@ f_readUrl = function(
                       gugunCode=gugunCode, houseType=houseType, jimokCode="", menuGubun="A",
                       rentAmtType="3", reqPage="SRH", roadCode="", sidoCode=sidoCode,
                       srhPeriod=period, srhType="TOT", srhYear=year, toAmt1="",
-                      toAmt2="", toAmt3="", useCode="", useSubCode="")          
+                      toAmt3="", toAmt3="", useCode="", useSubCode="")          
           r = POST(url, headers, body=body, encode="form") 
           rawdata = content(r, "text")
           data = fromJSON(rawdata)
