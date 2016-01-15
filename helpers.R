@@ -149,14 +149,15 @@ f_addInfo = function(apts, dongCode) {
 #-------------------------------------------------------------------------------
 # 국세청에서 온 자료는 nested 형태이기 때문에 각 row 를 개별 data.frame 으로
 # 변경해야 한다.
+# 2016.01.15 
+#   monthList 에 추가의 컬럼이 들어가 있는 것을 확인. 이것들을 제거해야
+#   기존의 데이터와 아귀가 맞는다.
 #-------------------------------------------------------------------------------
 f_parseData = function(df, dealYear, dealPeriod) {
   result1 = data.frame()
   result2 = data.frame()
   result3 = data.frame()
-  aptInfo = df[, c("BOBN", "BLDG_ROW", "BLDG_NM", "BUBN", "BLDG_CD", "BUILD_YEAR", 
-                   "BLDG_CNT", "BUILD_ROW", "BLDG_AREA", "AREA_ROW", "AREA_CNT", 
-                   "BUILD_CNT")]
+  aptInfo = df[, c("BLDG_ROW", "BLDG_CNT", "BUILD_ROW", "AREA_ROW", "AREA_CNT", "BUILD_CNT")]
   aptInfo$DEAL_YYYY = dealYear
   if (df$CNT1[1] > 0) {
     result1 = cbind(aptInfo, df$month1List[[1]], row.names = NULL)
@@ -193,9 +194,8 @@ f_getData = function(sidoCode, gugunCode, dongCode, year, period, requestType) {
   result = f_addInfo(result, dongCode)
   
   # 전세일 경우에 월세금액을 처리한다.
-  if (requestType == "r") {
-    result$RENT_AMT = as.numeric(gsub(",", "", result$RENT_AMT)) 
-  }
+  if (requestType == "r")  result$RENT_AMT = as.numeric(gsub(",", "", result$RENT_AMT)) 
+  else if (requestType == "t") result$RENT_AMT = NA
   return(result)
 }
 
@@ -218,6 +218,7 @@ f_dongYearData = function(dongCode, from, to, requestType) {
       apts = rbind(apts, tempApts)
     }
   }  
+  
   if (!is.null(apts)) {
     if (nrow(apts) != 0) apts = apts[, order(names(apts))]
   }
