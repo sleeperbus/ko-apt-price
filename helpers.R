@@ -195,6 +195,8 @@ f_getData = function(sidoCode, gugunCode, dongCode, year, period, requestType) {
   # 전세일 경우에 월세금액을 처리한다.
   if (requestType == "r") {
     result$RENT_AMT = as.numeric(gsub(",", "", result$RENT_AMT)) 
+  } else if (requestType == "t") {
+    result$RENT_AMT = NA
   }
   return(result)
 }
@@ -218,6 +220,7 @@ f_dongYearData = function(dongCode, from, to, requestType) {
       apts = rbind(apts, tempApts)
     }
   }  
+  
   if (!is.null(apts)) {
     if (nrow(apts) != 0) apts = apts[, order(names(apts))]
   }
