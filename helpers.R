@@ -6,10 +6,25 @@ library(jsonlite)
 library(stringr)
 library(log4r)
 library(plyr)
+library(httr)
 
 sidos = readRDS("data/sido.rds")
 guguns = readRDS("data/gugun.rds")
 dongs = readRDS("data/dong.rds")
+
+# 국토교통부 post request header
+url = "http://rt.molit.go.kr/srh/getListAjax.do"
+headers = add_headers(
+  Accept="application/json, text/javascript, */*; q=0.01",
+  Origin="http://rt.molit.go.kr", 
+  "X-Requested-With"="XMLHttpRequest",
+  "User-Agent" = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36",
+  "Content-Type"="application/x-www-form-urlencoded; charset=UTF-8",
+  "Referer"="http://rt.molit.go.kr/srh/srh.do?menuGubun=A&srhType=TOT&houseType=1&gubunCode=LAND",
+  "Accept-Encoding"="gzip, deflate",
+  "Accept-Language"="ko,en-US;q=0.8,en;q=0.6"
+)
+
 
 # 전역 로거
 logFileName = file.path(getwd(), paste0("log_", format(Sys.Date(), "%Y%m%d"), ".log"))
@@ -23,9 +38,9 @@ savePath = file.path(getwd(), "data")
 # 국토부 실거래가 사이트에 접속해서 데이터를 가져온다.
 # - qryType Trade 매매, Rent 전월세
 # - 가끔씩 request 에러가 발생하므로 10 정도는 retry 해준다.
-#-------------------------------------------------------------------------------
-url = paste0("")
-
+# [수정사항]
+# 2016.01.13  인터페이스가 변경됨
+#------------------------------------------------------------------------------- 
 f_readUrl = function(
   qryType, sidoCode, gugunCode, dongCode, year, period,
   warning = function(w) {
@@ -53,21 +68,21 @@ f_readUrl = function(
       tryCatch(
         {
           msg = paste0("tring to read, ", dongCode, "-", year, "-", period)  
+          
           debug(logger, msg)
-          url = paste0("http://rt.molit.go.kr/rtSearch.do?cmd=getApt", tradeType, "ListAjax",
-                       "&menuGubun=A&srhType=LOC&houseType=", houseType, 
-                       "&srhYear=", year, 
-                       "&srhPeriod=", period,
-                       "&gubunCode=LAND",
-                       "&sidoCode=", sidoCode,
-                       "&gugunCode=", gugunCode,
-                       "&dongCode=", dongCode,
-                       "&rentAmtType=3&areaCode=1")
-          rawData = readLines(url, encoding="UTF-8")           
-          data = fromJSON(rawData) 
+          body = list(areaCode="", chosung="", danjiCode="", dongCode=dongCode,
+                      fromAmt1="", fromAmt2="", fromAmt3="", gubunCode="LAND",
+                      gugunCode=gugunCode, houseType=houseType, jimokCode="", menuGubun="A",
+                      rentAmtType="3", reqPage="SRH", roadCode="", sidoCode=sidoCode,
+                      srhPeriod=period, srhType="TOT", srhYear=year, toAmt1="",
+                      toAmt3="", toAmt3="", useCode="", useSubCode="")          
+          r = POST(url, headers, body=body, encode="form") 
+          rawdata = content(r, "text")
+          data = fromJSON(rawdata)
+          
           # list 의 첫번째 원소가 data.frame 이다. 
           # 반환되어 온 자료가 없으면 NULL 을 반환한다.
-          data = data[[1]] 
+          data = data[[1]]
           if (length(data) > 0) return(data)
           else return(NULL)
         },
@@ -128,21 +143,21 @@ f_addInfo = function(apts, dongCode) {
   apts$GROUP = do.call(paste0, list(apts$BLDG_NM, apts$REAL_AREA_DESC))
   apts$GROUP = factor(apts$GROUP)
   apts$SUM_AMT = as.numeric(gsub(",", "", apts$SUM_AMT))
-  apts$RENT_AMT = as.numeric(gsub(",", "", apts$RENT_AMT))
   return (apts)  
 }
 
 #-------------------------------------------------------------------------------
 # 국세청에서 온 자료는 nested 형태이기 때문에 각 row 를 개별 data.frame 으로
 # 변경해야 한다.
+# 2016.01.15 
+#   monthList 에 추가의 컬럼이 들어가 있는 것을 확인. 이것들을 제거해야
+#   기존의 데이터와 아귀가 맞는다.
 #-------------------------------------------------------------------------------
 f_parseData = function(df, dealYear, dealPeriod) {
   result1 = data.frame()
   result2 = data.frame()
   result3 = data.frame()
-  aptInfo = df[, c("BOBN", "BLDG_ROW", "BLDG_NM", "BUBN", "BLDG_CD", "BUILD_YEAR", 
-                   "BLDG_CNT", "BUILD_ROW", "BLDG_AREA", "AREA_ROW", "AREA_CNT", 
-                   "BUILD_CNT")]
+  aptInfo = df[, c("BLDG_ROW", "BLDG_CNT", "BUILD_ROW", "AREA_ROW", "AREA_CNT", "BUILD_CNT")]
   aptInfo$DEAL_YYYY = dealYear
   if (df$CNT1[1] > 0) {
     result1 = cbind(aptInfo, df$month1List[[1]], row.names = NULL)
@@ -177,6 +192,10 @@ f_getData = function(sidoCode, gugunCode, dongCode, year, period, requestType) {
  
   # 각종 컬럼을 추가한다.
   result = f_addInfo(result, dongCode)
+  
+  # 전세일 경우에 월세금액을 처리한다.
+  if (requestType == "r")  result$RENT_AMT = as.numeric(gsub(",", "", result$RENT_AMT)) 
+  else if (requestType == "t") result$RENT_AMT = NA
   return(result)
 }
 
@@ -199,6 +218,7 @@ f_dongYearData = function(dongCode, from, to, requestType) {
       apts = rbind(apts, tempApts)
     }
   }  
+  
   if (!is.null(apts)) {
     if (nrow(apts) != 0) apts = apts[, order(names(apts))]
   }
