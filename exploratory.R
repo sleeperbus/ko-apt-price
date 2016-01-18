@@ -1,38 +1,53 @@
+################################################################################
+# 서구 28260 데이터 분석
+################################################################################
 library(dygraphs)
-################################################################################
-# dygraph 테스트
-################################################################################
-lungDeaths <- cbind(mdeaths, fdeaths)
-str(lungDeaths)
-dygraph(lungDeaths)
-dygraph(lungDeaths) %>% dyRangeSelector()
-
-
-################################################################################
-# 서구 28260
-# 계양구 28245
-# 김포시 41570
-################################################################################
 library(plyr)
 library(RColorBrewer)
+library(lubridate)
+library(ggvis)
 source("helpers.R")
-region_1 = f_readLocalGugunData("t", "28260", 2006, 2015)
-region_2 = f_readLocalGugunData("t", "28245", 2006, 2015)
-region_3 = f_readLocalGugunData("t", "41570", 2006, 2015)
-count_1 = count(region_1, c("SALE_YEAR", "SALE_MONTH"))
-count_2 = count(region_2, c("SALE_YEAR", "SALE_MONTH"))
-count_3 = count(region_3, c("SALE_YEAR", "SALE_MONTH"))
-x = ts(data = count_1$freq, start = c(2006, 1), frequency = 12)
-y = ts(data = count_2$freq, start = c(2006, 1), frequency = 12) 
-z = ts(data = count_3$freq, start = c(2006, 1), frequency = 12) 
-data = cbind(x, y, z)
 
-dygraph(data) %>% dyRangeSelector() %>%
-  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1"))
+region = f_readLocalGugunData("t", "28260", 2006, 2015)
 
-dygraph(data, main = "APT Prices") %>%
-  dyHighlight(highlightCircleSize = 5, 
-              highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)
+# 컬럼 추가
+region$SALE_DATE = floor_date(region$SALE_DATE, "month")
+region$UNIT_PRICE = with(region, round(TRADE_AMT/AREA))
+
+# 거래량
+volume = count(region, c("SALE_YEAR", "SALE_MONTH")) 
+ts.volume = ts(data = volume$freq, start = c(2006, 1), frequency = 12)
+
+# 매매물건의 m2당 가격변화
+unitprice = ddply(region, .(SALE_DATE), summarise, price = mean(UNIT_PRICE))  
+ts.unitprice = ts(data = unitprice$price, start = c(2006, 1), frequency = 12)
+
+# 평균단가와 거래량 간의 상관관계
+data = cbind(ts.volume, ts.unitprice) 
+dygraph(data) %>% dyRangeSelector()
+
+# 스케일링된 데이터를 비교
+scaled.volume = transform(volume, freq = scale(freq))
+scaled.unitprice = transform(unitprice, price = scale(price))
+ts.scaled.volume = ts(data = scaled.volume$freq, start = c(2006, 1), frequency = 12)
+ts.scaled.unitprice = ts(data = scaled.unitprice$price, start = c(2006, 1), frequency = 12)
+scaled.data = cbind(ts.scaled.volume, ts.scaled.unitprice)
+dygraph(scaled.data) %>% dyRangeSelector()
+
+# 2010년도 데이터만 추출해서 unitprice 의 histogram 
+region.2010 = subset(region, SALE_YEAR == 2010)
+ggvis(data=region.2010, x=~UNIT_PRICE) %>%
+  layer_histograms() 
+ggvis(data=region.2010, x=~UNIT_PRICE) %>%
+  layer_densities() 
+
+# 2014년도 데이터만 추출해서 unitprice 의 histogram 
+region.2014 = subset(region, SALE_YEAR == 2014)
+ggvis(data=region.2014, x=~UNIT_PRICE) %>%
+  layer_histograms() 
+ggvis(data=region.2014, x=~UNIT_PRICE, fill=~DONG_CODE) %>%
+  group_by(DONG_CODE) %>%
+  layer_histograms(opacity := 0.4) 
 
 ################################################################################
 # 전세가 대비 매매가
@@ -58,12 +73,11 @@ by.dong = count(trade, vars = c("DONG_CODE", "MONTH"))
 by.dong = dcast(by.dong, MONTH ~ DONG_CODE, mean, na.rm = T, value.var = "freq")
 by.dong$MONTH = NULL
 ts.dong = ts(as.matrix(by.dong), start = c(2006, 1), frequency = 12)
-dygraph(ts.dong) %>% dyRangeSelector()
+dygraph(ts.dong) %>% dyRangeSelector() %>%
+  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1"))
 
 # 아파트, 월별, 전용면적별로 평균가격을 구한다.
 avg.trade = ddply(trade, .(APT_CODE, AREA, MONTH), summarise, mean(TRADE_AMT))
 str(avg.trade)
 head(avg.trade)
-
-
 
