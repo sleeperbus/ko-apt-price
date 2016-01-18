@@ -11,4 +11,6 @@ guguns = readRDS("data/gugun.rds")
 dongs = readRDS("data/dong.rds")
 
 f_crawler(guguns$gugunCode, 2015, 2015, "t")
-f_crawler(guguns$gugunCode, 2006, 2015, "r")
+f_crawler(guguns$gugunCode, 2015, 2015, "r")
+f_crawler(guguns$gugunCode, 2016, 2016, "t")
+f_crawler(guguns$gugunCode, 2016, 2016, "r")

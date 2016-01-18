@@ -17,7 +17,7 @@ shinyUI(
                column(4, 
                       radioButtons("type", h4("거래유형"), choices = list("매매"="t", "전세"="r"),
                                    selected="t"),
-                      sliderInput("period", "기간:", min=2006, max=2015, value=c(2011, 2015))
+                      sliderInput("period", "기간:", min=2006, max=2016, value=c(2011, 2016))
                ), 
                column(4,
                       h4("지역선택"),
